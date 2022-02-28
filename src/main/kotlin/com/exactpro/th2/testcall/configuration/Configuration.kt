@@ -57,30 +57,5 @@ class Configuration(customConfiguration: CustomConfigurationClass) {
     val responseTimeout: Variable =
         Variable("responseTimeout", customConfiguration.responseTimeout.toString(), "60000")
 
-    val serverCacheTimeout: Variable =
-        Variable("serverCacheTimeout", customConfiguration.serverCacheTimeout.toString(), "60000")
-
-    val eventCacheSize: Variable =
-        Variable("eventCacheSize", customConfiguration.eventCacheSize.toString(), "1")
-
-    val checkRequestsAliveDelay: Variable =
-        Variable("checkRequestsAliveDelay", customConfiguration.checkRequestsAliveDelay.toString(), "2000")
-
-    val enableCaching: Variable = Variable("enableCaching", customConfiguration.enableCaching.toString(), "true")
-
-    val notModifiedObjectsLifetime: Variable =
-        Variable("notModifiedObjectsLifetime", customConfiguration.notModifiedObjectsLifetime.toString(), "3600")
-
-    val rarelyModifiedObjects: Variable =
-        Variable("rarelyModifiedObjects", customConfiguration.rarelyModifiedObjects.toString(), "500")
-
-    val sseEventSearchStep: Variable =
-        Variable("sseEventSearchStep", customConfiguration.sseEventSearchStep.toString(), "200")
-
-    val keepAliveTimeout: Variable =
-        Variable("keepAliveTimeout", customConfiguration.keepAliveTimeout.toString(), "5000")
-
-    val httpProviderLink = Variable("httpProviderLink", customConfiguration.httpProviderLink, "")
-
     val targetPort = Variable("targetPort", customConfiguration.targetPort.toString(), "8082")
 }
