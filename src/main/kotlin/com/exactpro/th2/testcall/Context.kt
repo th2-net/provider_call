@@ -26,9 +26,7 @@ import io.ktor.http.*
 @Suppress("MemberVisibilityCanBePrivate")
 class Context(
     val configuration: Configuration,
-
     val timeout: Long = configuration.responseTimeout.value.toLong()
-
 ) {
 
 
