@@ -56,6 +56,6 @@ class Configuration(customConfiguration: CustomConfigurationClass) {
 
     val responseTimeout: Variable =
         Variable("responseTimeout", customConfiguration.responseTimeout.toString(), "60000")
-    
+
     val targetPort = Variable("targetPort", customConfiguration.targetPort.toString(), "8082")
 }
