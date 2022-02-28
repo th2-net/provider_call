@@ -1,3 +1,5 @@
+package com.exactpro.th2.testcall
+
 /*******************************************************************************
  * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
  *
@@ -15,12 +17,7 @@
  ******************************************************************************/
 
 
-import com.exactpro.cradle.CradleManager
-import com.exactpro.th2.common.grpc.MessageGroupBatch
-import com.exactpro.th2.common.grpc.RawMessageBatch
-import com.exactpro.th2.common.schema.grpc.configuration.GrpcConfiguration
-import com.exactpro.th2.common.schema.message.MessageRouter
-import configuration.Configuration
+import com.exactpro.th2.testcall.configuration.Configuration
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

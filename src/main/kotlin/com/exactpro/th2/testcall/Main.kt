@@ -1,3 +1,5 @@
+package com.exactpro.th2.testcall
+
 /*******************************************************************************
  * Copyright 2022-2022 Exactpro (Exactpro Systems Limited)
  *
@@ -19,8 +21,8 @@ import com.exactpro.th2.common.schema.factory.CommonFactory
 import com.exactpro.th2.dataprovider.grpc.*
 import com.google.protobuf.Int32Value
 import com.google.protobuf.Timestamp
-import configuration.Configuration
-import configuration.CustomConfigurationClass
+import com.exactpro.th2.testcall.configuration.Configuration
+import com.exactpro.th2.testcall.configuration.CustomConfigurationClass
 import io.ktor.application.*
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -45,7 +47,7 @@ private class Timeouts {
     class Config(var requestTimeout: Long = 5000L, var excludes: List<String> = listOf("sse"))
 
     companion object : ApplicationFeature<ApplicationCallPipeline, Config, Unit> {
-        override val key: AttributeKey<Unit> = AttributeKey("Timeouts")
+        override val key: AttributeKey<Unit> = AttributeKey("com.exactpro.th2.testcall.Timeouts")
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Config.() -> Unit) {
             val config = Config().apply(configure)

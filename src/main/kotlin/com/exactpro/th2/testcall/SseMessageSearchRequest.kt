@@ -1,3 +1,5 @@
+package com.exactpro.th2.testcall
+
 /*******************************************************************************
  * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
  *
@@ -17,9 +19,6 @@
 import com.exactpro.cradle.Direction
 import com.exactpro.cradle.TimeRelation
 import com.exactpro.cradle.messages.StoredMessageId
-import com.exactpro.th2.dataprovider.grpc.MessageSearchRequest
-import com.exactpro.th2.dataprovider.grpc.TimeRelation.PREVIOUS
-import io.ktor.http.*
 import java.time.Instant
 
 data class StreamPointer(

@@ -14,7 +14,7 @@
  * limitations under the License.
  ******************************************************************************/
 
-package configuration
+package com.exactpro.th2.testcall.configuration
 
 import mu.KotlinLogging
 
