@@ -1,5 +1,6 @@
 *.bin
 .gradle
+gradle
 
 #th2 config files
 /config
