@@ -27,11 +27,7 @@ import io.ktor.http.*
 class Context(
     val configuration: Configuration,
 
-
-    val timeout: Long = configuration.responseTimeout.value.toLong(),
-    val jacksonMapper: ObjectMapper = jacksonObjectMapper()
-        .enable(DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY)
-        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    val timeout: Long = configuration.responseTimeout.value.toLong()
 
 ) {
 
