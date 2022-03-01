@@ -25,21 +25,6 @@ class CustomConfigurationClass {
     val targetUrl: String = "http://localhost:8082"
 
     val responseTimeout: Int = 60000
-    val serverCacheTimeout: Int = 60000
-
-    val eventCacheSize: Int = 1
-
-    val checkRequestsAliveDelay: Long = 2000
-
-    val enableCaching: Boolean = true
-    val notModifiedObjectsLifetime: Int = 3600
-    val rarelyModifiedObjects: Int = 500
-
-    val sseEventSearchStep: Long = 200
-
-    val keepAliveTimeout: Long = 5000
-
-    val httpProviderLink = ""
 }
 
 class Configuration(customConfiguration: CustomConfigurationClass) {
