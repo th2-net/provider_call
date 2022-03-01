@@ -39,7 +39,8 @@ data class SseMessageSearchRequest(
     val lookupLimitDays: Int?,
     val resumeFromIdsList: List<StreamPointer>,
     val includeProtocols: List<String>?,
-    val excludeProtocols: List<String>?
+    val excludeProtocols: List<String>?,
+    val frequency: Int
 ) {
 
     companion object {
@@ -77,9 +78,9 @@ data class SseMessageSearchRequest(
         lookupLimitDays = parameters["lookupLimitDays"]?.firstOrNull()?.toInt(),
 
         includeProtocols = parameters["includeProtocols"],
-        excludeProtocols = parameters["excludeProtocols"]
+        excludeProtocols = parameters["excludeProtocols"],
+        frequency = parameters["frequency"]?.firstOrNull()?.toInt() ?: 50
     )
-
 
 
     private fun checkEndTimestamp() {

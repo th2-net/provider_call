@@ -22,7 +22,7 @@ class CustomConfigurationClass {
     val hostname: String = "localhost"
     val port: Int = 8080
 
-    val targetPort: Int = 8082
+    val targetUrl: String = "http://localhost:8082"
 
     val responseTimeout: Int = 60000
     val serverCacheTimeout: Int = 60000
@@ -57,5 +57,5 @@ class Configuration(customConfiguration: CustomConfigurationClass) {
     val responseTimeout: Variable =
         Variable("responseTimeout", customConfiguration.responseTimeout.toString(), "60000")
 
-    val targetPort = Variable("targetPort", customConfiguration.targetPort.toString(), "8082")
+    val targetUrl = Variable("targetUrl", customConfiguration.targetUrl.toString(), "")
 }

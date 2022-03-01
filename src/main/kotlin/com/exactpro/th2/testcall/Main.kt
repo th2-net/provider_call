@@ -94,7 +94,7 @@ fun main(args: Array<String>) {
         Configuration(factory.getCustomConfiguration(CustomConfigurationClass::class.java))
     )
 
-    val targetPort = applicationContext.configuration.targetPort.value.toInt()
+    val targetUrl = applicationContext.configuration.targetUrl.value
 
     val configuration = applicationContext.configuration
 
@@ -117,10 +117,11 @@ fun main(args: Array<String>) {
                 call.response.headers.append(HttpHeaders.CacheControl, "no-cache, no-store, no-transform")
 
                 val client = HttpClient { expectSuccess = false }
-                val targetUri = "http://${call.request.host()}:${targetPort}${call.request.uri.replaceFirst(
-                    "/http", "/search/sse/messages/"
-                )}"
+                val targetUri = "${targetUrl}/search/sse/messages/${call.request.uri.let {
+                    it.substring(it.indexOf("?"))
+                }}"
 
+                val request = SseMessageSearchRequest(call.parameters.toMap())
                 client.request<HttpStatement>(targetUri) {
                     header("Accept-Encoding", "")
                     header("Accept", "text/event-stream")
@@ -143,7 +144,7 @@ fun main(args: Array<String>) {
                                         needSend = true
                                     }
 
-                                    if (key == "data" && needSend && counter % 50 == 0) {
+                                    if (key == "data" && needSend && counter % request.frequency == 0) {
                                         builder.append(line)
                                     }
                                     counter++
@@ -183,7 +184,7 @@ fun main(args: Array<String>) {
 
                     for (response in iter) {
 
-                        if (counter % 50 == 0) {
+                        if (counter % request.frequency == 0) {
                             write("data: ${response.message.message.metadata}\n")
 
                             write("\n")
