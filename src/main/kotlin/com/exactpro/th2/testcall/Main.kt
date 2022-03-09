@@ -106,6 +106,9 @@ fun main(args: Array<String>) {
         install(Timeouts) {
             requestTimeout = applicationContext.timeout
         }
+        install(CallLogging) {
+            level = org.slf4j.event.Level.DEBUG
+        }
 
         routing {
 
@@ -171,12 +174,16 @@ fun main(args: Array<String>) {
                     checkContext(call)
                 }
 
+                val filters = FilterBuilder(queryParametersMap).buildFilters()
+
                 val grpcRequest = MessageSearchRequest.newBuilder()
                 request.startTimestamp?.let { grpcRequest.setStartTimestamp(Timestamp.newBuilder().setSeconds(it.epochSecond).setNanos(it.nano)) }
                 request.endTimestamp?.let { grpcRequest.setEndTimestamp(Timestamp.newBuilder().setSeconds(it.epochSecond).setNanos(it.nano)) }
                 grpcRequest.setStream(StringList.newBuilder().addAllListString(request.stream))
                 grpcRequest.setSearchDirection(if (request.searchDirection == TimeRelation.AFTER) com.exactpro.th2.dataprovider.grpc.TimeRelation.NEXT else com.exactpro.th2.dataprovider.grpc.TimeRelation.PREVIOUS)
                 request.resultCountLimit?.let { grpcRequest.setResultCountLimit(Int32Value.of(it)) }
+
+                grpcRequest.addAllFilters(filters)
 
                 var counter = 0
                 call.respondTextWriter(contentType = ContentType.Text.EventStream) {
