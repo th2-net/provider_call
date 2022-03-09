@@ -55,6 +55,9 @@ dependencies {
 
     implementation 'io.prometheus:simpleclient'
 
+    implementation "io.ktor:ktor-client-logging:${ktorVersion}"
+
+
     implementation 'com.fasterxml.jackson.core:jackson-core'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
 
