@@ -38,9 +38,14 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.util.*
 import io.ktor.utils.io.*
+import io.prometheus.client.Gauge
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import mu.KotlinLogging
 import java.nio.channels.ClosedChannelException
+import java.time.Instant
 import kotlin.coroutines.coroutineContext
+import kotlin.system.measureTimeMillis
 
 
 private class Timeouts {
@@ -82,13 +87,64 @@ suspend fun checkContext(context: ApplicationCall) {
     }
 }
 
+private val logger = KotlinLogging.logger { }
+private val msgPerSecond = Gauge
+    .build("th2_provider_call_messages_per_second", "Average messages per second")
+    .register()
+
+
+private fun getTestUrl(configuration: Configuration): String {
+    val streams = configuration.streams.joinToString { "&stream=$it" }
+    val start = "startTimestamp=${configuration.startTimestamp.value}"
+    val end = "endTimestamp=${configuration.endTimestamp.value}"
+    val limit = configuration.limit.value.toLong()
+    val direction = configuration.direction.value
+    return buildString {
+        append("${configuration.targetUrl.value}/search/sse/messages/?${start}&${end}${streams}")
+        append("&searchDirection=$direction")
+        if (limit > 0) {
+            append("&resultCountLimit=$limit")
+        }
+    }
+}
+
+private suspend fun testRequestTime(configuration: Configuration) {
+    val targetUri = getTestUrl(configuration)
+    val responceFlow = HttpLoader(targetUri).request()
+    var totalMessagesCount = 0L
+    var totalMessagesSize = 0L
+    measureTimeMillis {
+        responceFlow.collect {
+            totalMessagesSize += it.encodeToByteArray().size
+            totalMessagesCount++
+        }
+    }.also {
+        val seconds = it / 1000.0
+        val messagesInSecond = totalMessagesCount.toDouble() / seconds
+        logger.debug { "Test speed log. Request: ${targetUri}, time: ${it}ms, total_messages: ${totalMessagesCount}, total_messages_size: ${totalMessagesSize}, messages_in_second: ${messagesInSecond}" }
+        msgPerSecond.set(messagesInSecond)
+    }
+}
+
+
+private suspend fun launchStatistics(configuration: Configuration) {
+    val timeout = configuration.statisticsTimeout.value.toLong()
+    while (true) {
+        runCatching { testRequestTime(configuration) }
+            .onFailure {
+                logger.error(it)
+            }
+        delay(timeout)
+    }
+}
+
 
 @InternalCoroutinesApi
 @FlowPreview
 @ExperimentalCoroutinesApi
 @EngineAPI
 @InternalAPI
-fun main(args: Array<String>) {
+suspend fun main(args: Array<String>) {
     val factory = CommonFactory.createFromArguments(*args)
     val applicationContext = Context(
         Configuration(factory.getCustomConfiguration(CustomConfigurationClass::class.java))
@@ -97,6 +153,10 @@ fun main(args: Array<String>) {
     val targetUrl = applicationContext.configuration.targetUrl.value
 
     val configuration = applicationContext.configuration
+//
+    GlobalScope.launch {
+        launchStatistics(configuration)
+    }
 
     val grpc = factory.grpcRouter.getService(DataProviderService::class.java)
 
@@ -119,48 +179,21 @@ fun main(args: Array<String>) {
                 }
                 call.response.headers.append(HttpHeaders.CacheControl, "no-cache, no-store, no-transform")
 
-                val client = HttpClient { expectSuccess = false }
-                val targetUri = "${targetUrl}/search/sse/messages/${call.request.uri.let {
-                    it.substring(it.indexOf("?"))
-                }}"
+                val targetUri =
+                    "${targetUrl}/search/sse/messages/${call.request.uri.let { it.substring(it.indexOf("?")) }}"
 
                 val request = SseMessageSearchRequest(call.parameters.toMap())
-                client.request<HttpStatement>(targetUri) {
-                    header("Accept-Encoding", "")
-                    header("Accept", "text/event-stream")
-                    header("Cache-Control", "no-cache")
-                    method = HttpMethod.Get
+                val responceFlow = HttpLoader(targetUri).request()
 
-                }.execute { response: HttpResponse ->
-                    val channel = response.receive<ByteReadChannel>()
-                    val builder = StringBuilder()
-                    var counter = 0
-                    call.respondTextWriter(contentType = ContentType.Text.EventStream) {
-                        while (isActive) {
-                            var needSend = false
-                            do {
-                                val line = channel.readUTF8Line()
-                                if (line != null && line.isNotBlank()) {
-                                    val key = line.substring(0 until line.indexOf(": "))
-
-                                    if (key == "event" && line.substring(line.indexOf(": ") + 2, line.length) == "message") {
-                                        needSend = true
-                                    }
-
-                                    if (key == "data" && needSend && counter % request.frequency == 0) {
-                                        builder.append(line)
-                                    }
-                                    counter++
-                                }
-                            } while (line?.isBlank() != true)
-
-                            if (builder.isNotBlank()) {
-                                write(builder.toString())
-                                write("\n\n")
-                                flush()
-                                builder.setLength(0)
-                            }
+                var counter = 0
+                call.respondTextWriter(contentType = ContentType.Text.EventStream) {
+                    responceFlow.collect { data ->
+                        if (counter % request.frequency == 0) {
+                            write(data)
+                            write("\n\n")
+                            flush()
                         }
+                        counter++
                     }
                 }
             }
@@ -177,8 +210,16 @@ fun main(args: Array<String>) {
                 val filters = FilterBuilder(queryParametersMap).buildFilters()
 
                 val grpcRequest = MessageSearchRequest.newBuilder()
-                request.startTimestamp?.let { grpcRequest.setStartTimestamp(Timestamp.newBuilder().setSeconds(it.epochSecond).setNanos(it.nano)) }
-                request.endTimestamp?.let { grpcRequest.setEndTimestamp(Timestamp.newBuilder().setSeconds(it.epochSecond).setNanos(it.nano)) }
+                request.startTimestamp?.let {
+                    grpcRequest.setStartTimestamp(
+                        Timestamp.newBuilder().setSeconds(it.epochSecond).setNanos(it.nano)
+                    )
+                }
+                request.endTimestamp?.let {
+                    grpcRequest.setEndTimestamp(
+                        Timestamp.newBuilder().setSeconds(it.epochSecond).setNanos(it.nano)
+                    )
+                }
                 grpcRequest.setStream(StringList.newBuilder().addAllListString(request.stream))
                 grpcRequest.setSearchDirection(if (request.searchDirection == TimeRelation.AFTER) com.exactpro.th2.dataprovider.grpc.TimeRelation.NEXT else com.exactpro.th2.dataprovider.grpc.TimeRelation.PREVIOUS)
                 request.resultCountLimit?.let { grpcRequest.setResultCountLimit(Int32Value.of(it)) }

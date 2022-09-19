@@ -17,6 +17,7 @@
 package com.exactpro.th2.testcall.configuration
 
 import mu.KotlinLogging
+import java.time.Instant
 
 class CustomConfigurationClass {
     val hostname: String = "localhost"
@@ -25,6 +26,18 @@ class CustomConfigurationClass {
     val targetUrl: String = "http://localhost:8082"
 
     val responseTimeout: Int = 60000
+
+    val statisticsTimeout: Long = 6000
+
+    val streams: Set<String> = emptySet()
+
+    val startTimestamp: String = Instant.now().toString()
+
+    val endTimestamp: String = Instant.now().toString()
+
+    val limit: Int = -1
+
+    val direction: String = "next"
 }
 
 class Configuration(customConfiguration: CustomConfigurationClass) {
@@ -43,4 +56,20 @@ class Configuration(customConfiguration: CustomConfigurationClass) {
         Variable("responseTimeout", customConfiguration.responseTimeout.toString(), "60000")
 
     val targetUrl = Variable("targetUrl", customConfiguration.targetUrl.toString(), "")
+
+    val statisticsTimeout = Variable("statisticsTimeout", customConfiguration.statisticsTimeout.toString(), "6000")
+
+    val streams = customConfiguration.streams.also {
+        if (it.isEmpty()) {
+            throw IllegalArgumentException("streams must contains one or more values")
+        }
+    }
+
+    val startTimestamp = Variable("startTimestamp", customConfiguration.startTimestamp, Instant.now().toString())
+
+    val endTimestamp = Variable("endTimestamp", customConfiguration.endTimestamp, Instant.now().toString())
+
+    val limit = Variable("limit", customConfiguration.limit.toString(), "-1")
+
+    val direction = Variable("direction", customConfiguration.direction, "next")
 }
